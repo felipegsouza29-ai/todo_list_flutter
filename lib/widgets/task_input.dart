@@ -10,7 +10,7 @@ class TaskInput extends StatefulWidget {
  super.key,
  required this.selectedDate,
  required this.onAdd,
- })
+ });
 
  @override
  State<TaskInput> createState() => _TaskInputState();
@@ -41,7 +41,7 @@ class TaskInput extends StatefulWidget {
   super.dispose();
  }
 
- Future<void> pickDate() async {
+ Future<void> _pickDate() async {
   final picked = await showDatePicker(
    context: context,
    initialDate: _taskDate,
@@ -109,6 +109,18 @@ class TaskInput extends StatefulWidget {
                   icon: const Icon(Icons.calendar_today),
                   label: Text(formatShortDate(_taskDate)),
                 ),
+              ),
+
+              const SizedBox(width: 12),
+              FilledButton(
+                onPressed: _submit,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(120, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  )
+                ),
+                child: const Text('ADICIONAR'),
               )
             ],
           )
