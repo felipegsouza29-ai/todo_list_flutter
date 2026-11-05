@@ -29,7 +29,7 @@ class Appstorage {
     return prefs.getBool(_loggeedIntKey) ?? false;
    }
 
-   Future<bool> setLogged(bool value) async{
+   Future<bool> setLoggedIn(bool value) async{
     final prefs = await SharedPreferences.getInstance();
     return prefs.setBool(_loggeedIntKey, value);
    }
