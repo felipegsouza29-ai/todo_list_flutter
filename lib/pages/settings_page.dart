@@ -29,6 +29,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _loadSettings() async {
     final settings = await _appStorage.loadSettings();
+    if (!mounted) return;
+
     setState(() {
       _darkMode = settings.darkMode;
       _confirmDelete = settings.confirmDelete;
@@ -42,18 +44,18 @@ class _SettingsPageState extends State<SettingsPage> {
     });
 
     await _appStorage.saveDarkMode(value);
-    
+    if (!mounted) return;
+
     widget.onThemeChanged(value);
   }
-
 
   Future<void> _toggleConfirmDelete(bool value) async {
     setState(() {
       _confirmDelete = value;
     });
+
     await _appStorage.saveConfirmDelete(value);
   }
-
 
   Future<void> _confirmLogout() async {
     final shouldLogout = await showDialog<bool>(
@@ -76,35 +78,27 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
-    
     if (shouldLogout == true) {
-      
       await _appStorage.setLoggedIn(false);
-      if (!mounted) {
-        return;
-      }
-      
+      if (!mounted) return;
+
       Navigator.pop(context);
-    
       widget.onLogout();
     }
   }
 
   Future<void> _changePassword() async {
-    
     final changed = await showDialog<bool>(
       context: context,
+      barrierDismissible: false, // Evita fechar sem querer enquanto salva
       builder: (context) {
         return _ChangePasswordDialog(appStorage: _appStorage);
       },
     );
 
-  
     if (changed == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Senha alterada com sucesso!'),
-        ),
+        const SnackBar(content: Text('Senha alterada com sucesso!')),
       );
     }
   }
@@ -112,18 +106,14 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Configurações'),
-      ),
+      appBar: AppBar(title: const Text('Configurações')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
                 const _SectionTitle('APARÊNCIA'),
-                
                 SwitchListTile(
                   title: const Text('Modo escuro'),
-                
                   subtitle: Text(_darkMode ? '🌙 Ativado' : '☀️ Desativado'),
                   value: _darkMode,
                   onChanged: _toggleDarkMode,
@@ -140,7 +130,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 const _SectionTitle('CONTA'),
                 ListTile(
                   title: const Text('Alterar senha'),
-                 
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _changePassword,
                 ),
@@ -160,26 +149,21 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-
 class _ChangePasswordDialog extends StatefulWidget {
   final AppStorage appStorage;
 
-  const _ChangePasswordDialog({
-    required this.appStorage,
-  });
+  const _ChangePasswordDialog({required this.appStorage});
 
   @override
   State<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
 }
 
 class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
- 
   final TextEditingController _currentController = TextEditingController();
   final TextEditingController _newController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
 
   String? _errorMessage;
-  
   bool _isSaving = false;
 
   @override
@@ -191,17 +175,23 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
   }
 
   Future<void> _save() async {
+    if (_isSaving) return;
+
+    setState(() {
+      _isSaving = true;
+      _errorMessage = null;
+    });
+
     final current = _currentController.text.trim();
     final next = _newController.text.trim();
     final confirm = _confirmController.text.trim();
     final savedPassword = await widget.appStorage.loadPassword();
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     if (current != savedPassword) {
       setState(() {
+        _isSaving = false;
         _errorMessage = 'Senha atual incorreta.';
       });
       return;
@@ -209,28 +199,31 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
 
     if (next.isEmpty) {
       setState(() {
+        _isSaving = false;
         _errorMessage = 'A nova senha não pode ficar vazia.';
+      });
+      return;
+    }
+
+    if (next == current) {
+      setState(() {
+        _isSaving = false;
+        _errorMessage = 'A nova senha deve ser diferente da atual.';
       });
       return;
     }
 
     if (next != confirm) {
       setState(() {
+        _isSaving = false;
         _errorMessage = 'A confirmação não confere com a nova senha.';
       });
       return;
     }
 
-    setState(() {
-      _isSaving = true;
-      _errorMessage = null;
-    });
-
     await widget.appStorage.savePassword(next);
-    if (!mounted) {
-      return;
-    }
-   
+    if (!mounted) return;
+
     Navigator.pop(context, true);
   }
 
@@ -240,41 +233,39 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
       title: const Text('Alterar senha'),
       content: SingleChildScrollView(
         child: Column(
-        
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _currentController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Senha atual',
-              ),
+              textInputAction: TextInputAction.next,
+              enabled: !_isSaving,
+              decoration: const InputDecoration(labelText: 'Senha atual'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _newController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Nova senha',
-              ),
+              textInputAction: TextInputAction.next,
+              enabled: !_isSaving,
+              decoration: const InputDecoration(labelText: 'Nova senha'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _confirmController,
               obscureText: true,
+              textInputAction: TextInputAction.done,
+              enabled: !_isSaving,
+              onSubmitted: (_) => _save(),
               decoration: const InputDecoration(
                 labelText: 'Confirmar nova senha',
               ),
             ),
-            
             if (_errorMessage != null) ...[
               const SizedBox(height: 12),
               Text(
-              
                 _errorMessage!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ],
           ],
@@ -282,18 +273,24 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
       ),
       actions: [
         TextButton(
-        
-          onPressed: _isSaving ? null : () => Navigator.pop(context),
+          onPressed: _isSaving ? null : () => Navigator.pop(context, false),
           child: const Text('Cancelar'),
         ),
         FilledButton(
           onPressed: _isSaving ? null : _save,
-          child: const Text('Salvar'),
+          child: _isSaving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Salvar'),
         ),
       ],
     );
   }
 }
+
 class _SectionTitle extends StatelessWidget {
   final String title;
 
@@ -306,9 +303,9 @@ class _SectionTitle extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

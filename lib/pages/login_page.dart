@@ -1,64 +1,59 @@
 import 'package:flutter/material.dart';
-import '../services/app.storage.dart';
+import '../services/app_storage.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback onLogin;
 
- const LoginPage({
-  super.key,
-  required this.onLogin,
- });
+  const LoginPage({super.key, required this.onLogin});
 
- @override
+  @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final Appstorage _appstorage = Appstorage();
+  final AppStorage _appstorage = AppStorage();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-@override
- void dispose(){
-  _usernameController.clear();
-  _passwordController.clear();
-  super.dispose();
- }
+  @override
+  void dispose() {
+    _usernameController.clear();
+    _passwordController.clear();
+    super.dispose();
+  }
 
- Future<void> _login() async {
-   final username = _usernameController.text.trim();
-   final password = _passwordController.text.trim();
-   final isValid = await _appstorage.validateLogin(username, password);
+  Future<void> _login() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+    final isValid = await _appstorage.validateLogin(username, password);
 
-   if(!mounted){
-    return;
-   }
+    if (!mounted) {
+      return;
+    }
 
-   if(!isValid){
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar
-      (content: Text('Usuário ou senha incorretos'),
-      ),
-    );
+    if (!isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Usuário ou senha incorretos')),
+      );
 
-    return;
-   }
+      return;
+    }
 
-   await _appstorage.setLoggedIn(true);
-   widget.onLogin();
- }
+    await _appstorage.setLoggedIn(true);
+    widget.onLogin();
+  }
 
- @override 
- Widget build(BuildContext context){
-   final ColorScheme = Theme.of(context).colorScheme;
-   final TextTheme = Theme.of(context).textTheme;
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme = Theme.of(context).colorScheme;
+    final TextTheme = Theme.of(context).textTheme;
 
-   return Scaffold(
-     body: SafeArea(
-      child: Center(
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
           child: SingleChildScrollView(
-             padding: const EdgeInsets.all(24),
-             child: ConstrainedBox(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
                 children: [
@@ -90,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                       hintText: 'aluno',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                      ),  
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -116,11 +111,11 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ],
-               ),
               ),
-           ),
+            ),
+          ),
         ),
-       ),
+      ),
     );
   }
 }

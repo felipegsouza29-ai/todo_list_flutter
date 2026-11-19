@@ -4,12 +4,10 @@ import 'pages/login_page.dart';
 import 'services/app_storage.dart';
 
 void main() {
-  
   runApp(const TodoApp());
 }
 
 class TodoApp extends StatefulWidget {
-
   const TodoApp({super.key});
 
   @override
@@ -26,9 +24,10 @@ class _TodoAppState extends State<TodoApp> {
     super.initState();
     _loadAppState();
   }
+
   Future<void> _loadAppState() async {
-    await _appStorage.ensureDefaultUser();
-    final isLoggedIn = await _appStorage.loadIsLoggedIn();
+    await _appStorage.ensureDefaulUser();
+    final isLoggedIn = await _appStorage.loadIsLogged();
     final settings = await _appStorage.loadSettings();
     setState(() {
       _isLoggedIn = isLoggedIn;
@@ -36,21 +35,25 @@ class _TodoAppState extends State<TodoApp> {
       _isLoading = false;
     });
   }
+
   void _handleLogin() {
     setState(() {
       _isLoggedIn = true;
     });
   }
+
   void _handleLogout() {
     setState(() {
       _isLoggedIn = false;
     });
   }
+
   void _handleThemeChanged(bool darkMode) {
     setState(() {
       _darkMode = darkMode;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     const seedColor = Color(0xFF1565C0);
@@ -59,12 +62,8 @@ class _TodoAppState extends State<TodoApp> {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor,
-        ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: false,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
+        appBarTheme: const AppBarTheme(centerTitle: false),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
@@ -72,21 +71,17 @@ class _TodoAppState extends State<TodoApp> {
           seedColor: seedColor,
           brightness: Brightness.dark,
         ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: false,
-        ),
+        appBarTheme: const AppBarTheme(centerTitle: false),
       ),
       themeMode: _darkMode ? ThemeMode.dark : ThemeMode.light,
       home: _isLoading
-          ? const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            )
+          ? const Scaffold(body: Center(child: CircularProgressIndicator()))
           : _isLoggedIn
-              ? HomePage(
-                  onLogout: _handleLogout,
-                  onThemeChanged: _handleThemeChanged,
-                )
-              : LoginPage(onLogin: _handleLogin),
+          ? HomePage(
+              onLogout: _handleLogout,
+              onThemeChanged: _handleThemeChanged,
+            )
+          : LoginPage(onLogin: _handleLogin),
     );
   }
 }
